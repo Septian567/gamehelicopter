@@ -5,21 +5,32 @@
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#07051a;color:#e8f6ff;font-family:system-ui,sans-serif;overflow:hidden}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:6px}
-canvas{width:min(100%,calc((100dvh - 120px)*16/9));aspect-ratio:16/9;background:#000;border-radius:10px;touch-action:none;box-shadow:0 0 30px #7b2cff55}
-.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-button{background:#1a1140;color:#bff;border:1px solid #5b3cff;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;touch-action:none;user-select:none}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px max(6px,env(safe-area-inset-right)) 6px max(6px,env(safe-area-inset-left))}
+canvas{flex:none;order:0;background:#000;border-radius:10px;touch-action:none;box-shadow:0 0 30px #7b2cff55}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%;max-width:1100px;order:1}
+button{background:#1a1140;color:#bff;border:1px solid #5b3cff;border-radius:10px;padding:8px 8px;font-size:13px;font-weight:600;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;flex:1 1 auto;min-height:42px;min-width:84px}
 button:active{background:#5b3cff}
+body.side{flex-direction:row;align-items:stretch;justify-content:center;gap:8px}
+body.side canvas{align-self:center}
+body.side .btns{flex-direction:column;flex-wrap:nowrap;width:auto;max-width:none}
+body.side .btns button{flex:1 1 0;min-height:0;min-width:104px;font-size:12px;padding:4px 6px}
+body.side #bl{order:-1}
+#rot{display:none;order:-2;font-size:12px;color:#ffd166;text-align:center;padding:2px}
+@media (orientation:portrait) and (max-width:700px){#rot{display:block}}
+@media (max-width:480px){button{font-size:12px;min-width:76px}}
 </style></head><body>
+    <div id="rot" onclick="this.remove();fit()">📱 Putar HP ke mode landscape
+      agar layar lebih besar (ketuk untuk tutup)</div>
     <canvas id="c" width="960" height="540"></canvas>
-    <div class="btns">
+    <div class="btns" id="bl">
       <button id="bF">🔫 Tembak</button><button id="bI">👻 Invisibel
         [I]</button><button id="bT">⚡ Teleport [T]</button><button id="bQ">🌀
         Dimensi [Q]</button><button id="bB">💣 Bom [B]</button><button
-        id="bR">🚀 Roket [R]</button><button id="bPa">⏸️ Pause
-        [P]</button><button id="bM">🔊 Musik [M]</button><button id="bP">🪖
-        Pasukan [F]</button><button id="bX">🛡️ Hapus Peluru [X]</button><button
-        id="bC">👥 Kloning [C]</button><button id="bN">☢️ Nuklir [N]</button>
+        id="bR">🚀 Roket [R]</button></div><div class="btns" id="br"><button
+        id="bPa">⏸️ Pause [P]</button><button id="bM">🔊 Musik
+        [M]</button><button id="bP">🪖 Pasukan [F]</button><button id="bX">🛡️
+        Hapus Peluru [X]</button><button id="bC">👥 Kloning [C]</button><button
+        id="bN">☢️ Nuklir [N]</button>
     </div>
     <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),W=960,H=540,G=H-36;
@@ -61,9 +72,16 @@ function note(f,t,d,ty,v){const o=AC.createOscillator(),g=AC.createGain();o.type
 function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.2)}
 function sched(){if(!AC||AC.state!='running')return;const sp=boss?0.13:0.17;if(nxt<AC.currentTime)nxt=AC.currentTime;while(nxt<AC.currentTime+.25){const on=st=='play'||st=='menu',i=stp%16;if(on){if(i%2==0)note(BS[(stp>>1)%8]*(boss?1.12:1),nxt,sp*1.8,'sawtooth',.35);if(i%4==0)kick(nxt);if(LD[i])note(LD[i]*(boss&&i%2?1.26:1),nxt,sp*1.4,'square',.1);if(boss&&i%4==2)note(1200,nxt,.04,'square',.05)}stp++;nxt+=sp}}
 function initAudio(){if(AC){if(AC.state=='suspended'&&!paused)AC.resume();return}try{AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=mus?.2:0;mg.connect(AC.destination);nxt=AC.currentTime+.1;setInterval(sched,80)}catch(e){}}
-function togglePause(){if(st!='play')return;paused=!paused;if(AC){paused?AC.suspend():AC.resume()}document.getElementById('bPa').textContent=paused?'▶ Lanjut [P]':'⏸️ Pause [P]'}
-function toggleMute(){mus=!mus;if(mg)mg.gain.value=mus?.2:0;document.getElementById('bM').textContent=mus?'🔊 Musik [M]':'🔇 Musik [M]'}
+function togglePause(){if(st!='play')return;paused=!paused;if(AC){paused?AC.suspend():AC.resume()}document.getElementById('bPa').textContent=lb(paused?'▶ Lanjut [P]':'⏸️ Pause [P]')}
+function toggleMute(){mus=!mus;if(mg)mg.gain.value=mus?.2:0;document.getElementById('bM').textContent=lb(mus?'🔊 Musik [M]':'🔇 Musik [M]')}
 addEventListener('pointerdown',initAudio);addEventListener('keydown',initAudio);
+const touch=matchMedia('(pointer:coarse)').matches,lb=s=>touch?s.replace(/ \[.\]/,''):s,TL=['Sentuh dan tahan layar: helikopter terbang ke arah jari','Tombol di samping layar: tembak, skill, dan pause','Ambil ➕ hijau untuk tambah nyawa','Kalahkan 3 bos lalu capai FINISH!'];let UI=1;
+function fit(){const side=innerWidth>innerHeight&&innerHeight<600&&innerWidth>=560;document.body.classList.toggle('side',side);const bl=document.getElementById('bl'),br=document.getElementById('br'),rt=document.getElementById('rot'),cs=getComputedStyle(document.documentElement),pv=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)+12;let aw,ah;
+if(side){aw=innerWidth-bl.offsetWidth-br.offsetWidth-16-24;ah=innerHeight-pv}
+else{aw=innerWidth-16;ah=innerHeight-pv-bl.offsetHeight-br.offsetHeight-(rt?rt.offsetHeight:0)-24}
+const w=Math.max(220,Math.min(aw,ah*16/9,1500));cv.style.width=w+'px';cv.style.height=w*9/16+'px';UI=Math.max(1,Math.min(1.9,720/w))}
+if(touch)document.querySelectorAll('.btns button').forEach(b=>b.textContent=lb(b.textContent));
+fit();addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,250));if(window.visualViewport)visualViewport.addEventListener('resize',fit);addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&st=='play'&&!paused)togglePause()});
 document.getElementById('bPa').addEventListener('pointerdown',e=>{e.preventDefault();togglePause()});
 document.getElementById('bM').addEventListener('pointerdown',e=>{e.preventDefault();toggleMute()});
@@ -130,7 +148,7 @@ ctx.fillStyle=`hsl(${hue+90},100%,70%)`;ctx.shadowColor=ctx.fillStyle;ctx.shadow
 [[.2,150,.25],[.5,90,.5],[1,50,.8]].forEach(([sp,h,a],k)=>{ctx.fillStyle=`hsla(${hue+20*k},60%,${14-k*3}%,${.5+a/2})`;ctx.beginPath();ctx.moveTo(0,G);for(let x=0;x<=W;x+=10){const u=x+scroll*sp;ctx.lineTo(x,G-h*(.5+.25*Math.sin(u*.008+k)+.25*Math.sin(u*.021+k*2)))}ctx.lineTo(W,G);ctx.fill()});
 for(let i=0;i<5;i++){const x=((i*260-scroll*.3)%1300+1300)%1300-150;ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.ellipse(x,70+i*45,80,16,0,0,7);ctx.fill()}
 ctx.fillStyle='#0a0620';ctx.fillRect(0,G,W,H-G);ctx.strokeStyle=`hsl(${hue+90},100%,60%)`;ctx.lineWidth=1.5;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(0,G);ctx.lineTo(W,G);for(let i=0;i<20;i++){const x=((i*60-scroll)%1200+1200)%1200-120;ctx.moveTo(x+60,G);ctx.lineTo(x-60,H)}ctx.stroke();ctx.shadowBlur=0}
-function bar(x,y,w,v,col,lab){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x,y,w,10);ctx.fillStyle=col;ctx.fillRect(x,y,w*Math.max(0,v),10);ctx.strokeStyle='#fff6';ctx.strokeRect(x,y,w,10);ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText(lab,x+3,y-3)}
+function bar(x,y,w,v,col,lab){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x,y,w,10);ctx.fillStyle=col;ctx.fillRect(x,y,w*Math.max(0,v),10);ctx.strokeStyle='#fff6';ctx.strokeRect(x,y,w,10);ctx.fillStyle='#fff';ctx.font=Math.round(10*Math.min(UI,1.6))+'px system-ui';ctx.textAlign='left';ctx.fillText(lab,x+3,y-3)}
 function txt(s,x,y,sz,col='#fff',al='center'){ctx.font=`700 ${sz}px system-ui`;ctx.textAlign=al;ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=12;ctx.fillText(s,x,y);ctx.shadowBlur=0}
 function draw(){ctx.save();if(shake>0)ctx.translate(R(-1,1)*shake*10,R(-1,1)*shake*10);bg();
 if(st!='menu'){
@@ -153,15 +171,15 @@ bar(14,22,170,P.hp/100,'#ff4d6d','NYAWA');bar(14,48,170,P.inv?P.iv/30:1-Math.max
 txt('SKOR '+score,W-14,28,18,'#ffe66d','right');
 const px=W/2-150;ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(px,16,300,10);ctx.fillStyle='#2de2e6';ctx.fillRect(px,16,300*Math.min(1,prog),10);[.25,.5,.75].forEach(v=>{ctx.fillStyle='#ff4d6d';ctx.fillRect(px+300*v-2,12,4,18)});ctx.fillStyle='#fff';ctx.fillRect(px+296,12,4,18);ctx.strokeStyle='#fff6';ctx.strokeRect(px,16,300,10);
 if(boss)bar(W/2-150,40,300,boss.hp/boss.max,'#ff9f1c','BOS '+boss.n);
-const sk=[['Q','Dimensi',P.ban,60,'#b36bff'],['T','Teleport',P.tp,4,'#4df'],['B','Bom',P.bm,1.2,'#ff9f1c'],['R','Roket',P.rk,3,'#ff5d2e'],['C','Kloning',P.cl,120,'#7dff9a'],['F','Pasukan',P.sq,60,'#ffd166'],['X','Bersih',P.cx,60,'#7dffea'],['N','Nuklir',P.nuke,60,'#ffd166']];sk.forEach((s,i)=>{const x=14+i*92,y=H-30,rd=s[2]<=0;ctx.fillStyle=rd?s[4]:'#222';ctx.globalAlpha=rd?.9:.7;ctx.fillRect(x,y-4,84,24);ctx.globalAlpha=1;ctx.fillStyle=rd?'#000':'#fff';ctx.font='700 12px system-ui';ctx.textAlign='center';ctx.fillText(rd?`[${s[0]}] ${s[1]}`:`${s[1]} ${Math.ceil(s[2])}d`,x+42,y+12)});
+const sk=[['Q','Dimensi',P.ban,60,'#b36bff'],['T','Teleport',P.tp,4,'#4df'],['B','Bom',P.bm,1.2,'#ff9f1c'],['R','Roket',P.rk,3,'#ff5d2e'],['C','Kloning',P.cl,120,'#7dff9a'],['F','Pasukan',P.sq,60,'#ffd166'],['X','Bersih',P.cx,60,'#7dffea'],['N','Nuklir',P.nuke,60,'#ffd166']];sk.forEach((s,i)=>{const x=14+i*92,y=H-30,rd=s[2]<=0;ctx.fillStyle=rd?s[4]:'#222';ctx.globalAlpha=rd?.9:.7;ctx.fillRect(x,y-4,84,24);ctx.globalAlpha=1;ctx.fillStyle=rd?'#000':'#fff';ctx.font='700 '+Math.round(12*Math.min(UI,1.25))+'px system-ui';ctx.textAlign='center';ctx.fillText(rd?`[${s[0]}] ${s[1]}`:`${s[1]} ${Math.ceil(s[2])}d`,x+42,y+12,78)});
 if(P.inv)txt('MODE INVISIBEL: tidak bisa menembak (tekan I untuk keluar)',W/2,H-50,14,'#8ff');
 if(bt>0)txt(banner,W/2,150,38,'#ff4d6d')}
-if(paused){ctx.fillStyle='rgba(5,3,20,.65)';ctx.fillRect(0,0,W,H);txt('⏸ JEDA',W/2,240,54,'#2de2e6');txt('Tekan P / ENTER atau sentuh layar untuk lanjut',W/2,290,20,'#fff')}
+if(paused){ctx.fillStyle='rgba(5,3,20,.65)';ctx.fillRect(0,0,W,H);txt('⏸ JEDA',W/2,240,54,'#2de2e6');txt('Tekan P / ENTER atau sentuh layar untuk lanjut',W/2,290,20*Math.min(UI,1.5),'#fff')}
 if(st=='menu'||st=='over'||st=='win'){ctx.fillStyle='rgba(5,3,20,.72)';ctx.fillRect(0,0,W,H);
 txt(st=='menu'?'SKY RAIDER':st=='over'?'GAME OVER':'MISI SELESAI! 🏁',W/2,150,56,st=='over'?'#ff4d6d':'#2de2e6');
 if(st!='menu')txt('Skor: '+score,W/2,200,26,'#ffe66d');
-if(st=='menu'){['Panah / WASD: gerak   •   Spasi: tembak   •   I: invisibel (30 dtk)   •   P: pause   •   M: musik','T: teleport   •   Q: dimensi (60 dtk)   •   B: bom   •   R: roket   •   C: kloning (2 mnt)   •   N: nuklir (60 dtk)','F: pasukan 10 (1 mnt)   •   X: hapus peluru musuh (1 mnt)','Ambil ➕ hijau untuk tambah nyawa. Kalahkan 3 bos lalu capai FINISH!','Sentuh layar: terbang ke arah jari + tombol di bawah'].forEach((s,i)=>txt(s,W/2,215+i*30,17,'#cfe'))}
-txt(st=='menu'?'Tekan ENTER / klik untuk mulai':'Tekan ENTER / klik untuk main lagi',W/2,400,22,'#fff')}
+if(st=='menu'){(touch?TL:['Panah / WASD: gerak   •   Spasi: tembak   •   I: invisibel (30 dtk)   •   P: pause   •   M: musik','T: teleport   •   Q: dimensi (60 dtk)   •   B: bom   •   R: roket   •   C: kloning (2 mnt)   •   N: nuklir (60 dtk)','F: pasukan 10 (1 mnt)   •   X: hapus peluru musuh (1 mnt)','Ambil ➕ hijau untuk tambah nyawa. Kalahkan 3 bos lalu capai FINISH!','Sentuh layar: terbang ke arah jari + tombol di bawah']).forEach((s,i)=>txt(s,W/2,215+i*(touch?44:30),17*(touch?UI:1),'#cfe'))}
+txt(touch?(st=='menu'?'Sentuh layar untuk mulai':'Sentuh layar untuk main lagi'):(st=='menu'?'Tekan ENTER / klik untuk mulai':'Tekan ENTER / klik untuk main lagi'),W/2,400,22*(touch?Math.min(UI,1.5):1),'#fff')}
 ctx.restore()}
 let last=performance.now();function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(st=='play'){if(!paused)update(dt)}else{tm+=dt;scroll+=60*dt;for(const f of FX){f.l-=dt;if(f.ring)f.r+=(f.max/f.m)*dt;else{f.x+=f.vx*dt;f.y+=f.vy*dt}}FX=FX.filter(f=>f.l>0);flash=Math.max(0,flash-dt)}draw();requestAnimationFrame(loop)}
 cv.addEventListener('click',()=>{if(st=='menu'){reset();st='play'}});
